@@ -161,11 +161,15 @@ function build() {
     }
   });
   const gold = new THREE.MeshStandardMaterial({ color: 0xc9a93a, metalness: 0.95, roughness: 0.32, bumpMap: emboss, bumpScale: 3 });
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.24, 1.24, 0.05, 96), gold);
-  plate.position.y = GLASS_H + 0.025;
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.22, 0.03, 12, 96), gold);
+  const PLATE_H = 0.16; // thick enough to read as a solid piece from a low camera angle
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.24, 1.24, PLATE_H, 96), gold);
+  plate.position.y = GLASS_H + PLATE_H / 2;
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.055, 14, 96), gold); // rounded top edge
   rim.rotation.x = Math.PI / 2;
-  rim.position.y = GLASS_H + 0.05;
+  rim.position.y = GLASS_H + PLATE_H;
+  const foot = new THREE.Mesh(new THREE.TorusGeometry(1.22, 0.04, 12, 96), gold); // rounded base
+  foot.rotation.x = Math.PI / 2;
+  foot.position.y = GLASS_H + 0.04;
   // silver hub with radial brushing
   const brush = canvasTex(256, (g, s) => {
     g.fillStyle = "#c4c8cb";
@@ -178,10 +182,10 @@ function build() {
       g.beginPath(); g.moveTo(0, 0); g.lineTo(s / 2, 0); g.stroke();
     }
   });
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.07, 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: brush, metalness: 1, roughness: 0.3, anisotropy: 0.8 }));
-  hub.position.y = GLASS_H + 0.085;
-  for (const m of [plate, rim, hub]) m.castShadow = m.receiveShadow = true;
-  turn.add(plate, rim, hub);
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.12, 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: brush, metalness: 1, roughness: 0.3, anisotropy: 0.8 }));
+  hub.position.y = GLASS_H + PLATE_H + 0.06;
+  for (const m of [plate, rim, foot, hub]) m.castShadow = m.receiveShadow = true;
+  turn.add(plate, rim, foot, hub);
 
   // four cards standing on small stands, one per project or recipe. The face is drawn on a canvas like the cards on the page.
   const CW = 1.92, CH = 1.45, CARD_R = 3.45; // CARD_R plus half a stand must stay inside the glass radius
