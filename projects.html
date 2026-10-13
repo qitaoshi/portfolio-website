@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projects | Qitao Shi</title>
+  <meta name="description" content="Case studies from things Qitao has built and broken.">
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="fonts/bagel-fat-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.className = "js";</script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="wrap nav">
+    <a class="brand" href="index.html">Qitao Shi</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#kitchen">Food</a></li>
+        <li><a href="projects.html" aria-current="page">Projects</a></li>
+      </ul>
+    </nav>
+    <a class="btn" href="resume.pdf" download>Resume</a>
+  </header>
+
+  <main class="wrap">
+    <div class="page-head">
+      <h1>Projects</h1>
+      <p>Case studies from things I've built and broken.</p>
+    </div>
+
+    <!-- TODO: replace # on the buttons below with real links -->
+    <article class="entry reveal" id="tennis">
+      <img src="img/tennis.jpg" alt="The Projector, a web app showing a predicted tennis match winner" width="1400" height="958">
+      <div>
+        <ul class="tags"><li>Machine Learning</li></ul>
+        <h2>Tennis Match Projection Model</h2>
+        <p>A model that predicts ATP match outcomes from player stats, surface and recent form. Trained on historical match data and served through a simple web app for live what-if predictions.</p>
+        <ul class="tags"><li>Python</li><li>Pandas</li><li>Scikit-Learn</li></ul>
+        <div class="cta"><a class="btn btn-accent" href="#">View case study</a><a class="btn btn-solid" href="#">GitHub</a></div>
+      </div>
+    </article>
+
+    <article class="entry reveal" id="side-quests">
+      <img src="img/side-quests.jpg" alt="Ink drawing of a tree, the Side Quests artwork" width="1100" height="810">
+      <div>
+        <h2>Side Quests</h2>
+        <p>Built with Dart, Flutter and Firebase.</p>
+        <ul class="tags"><li>Dart</li><li>Flutter</li><li>Firebase</li></ul>
+        <div class="cta"><a class="btn btn-solid" href="#">GitHub</a></div>
+      </div>
+    </article>
+
+    <article class="entry reveal" id="ray-tracer">
+      <img src="img/ray-tracer.jpg" alt="A ray traced rabbit inside a red, green and blue box" width="1100" height="813">
+      <div>
+        <h2>Ray Tracer</h2>
+        <p>A ray tracer written in C#.</p>
+        <ul class="tags"><li>C#</li></ul>
+        <div class="cta"><a class="btn btn-solid" href="#">GitHub</a></div>
+      </div>
+    </article>
+  </main>
+
+  <footer id="contact">
+    <div class="wrap">
+      <a class="mail" href="mailto:qitaoshi@gmail.com">qitaoshi@gmail.com</a>
+      <div class="social"><a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">Instagram</a></div>
+    </div>
+  </footer>
+</body>
+</html>
