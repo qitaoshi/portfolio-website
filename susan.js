@@ -287,7 +287,7 @@ function build() {
   }).catch(() => {}));
   Promise.all(loaded).then(() => { // all at once; any file that failed leaves its code-drawn version
     props.visible = bearing.visible = true;
-    if (!reduce) { // intro: the table lowers in, then the dishes drop onto it one by one
+    { // intro: the table lowers in, then the dishes drop onto it one by one. Plays even with reduced motion (a one-time 2s drop, tap to skip) since many PCs have OS animations off by default.
       const objs = [...cards.map((g) => g.children[0]), ...props.children.filter((o) => Math.hypot(o.position.x, o.position.z) > 1)];
       intro = { t0: performance.now(), dishes: objs.map((o) => ({ o, y: o.position.y })) };
       turn.position.y = 6;
