@@ -58,7 +58,7 @@ h1, h2, h3, .brand { font-family: "Bagel Fat One", system-ui, sans-serif; font-w
 .nav { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 2rem; min-height: var(--nav-h); padding-block: .75rem; }
 .brand { font-size: 1.35rem; }
 .nav ul { display: flex; gap: 1.25rem; font-weight: 600; font-size: .9rem; }
-.nav ul a, .social a { display: inline-block; padding: .7rem .25rem; }
+.nav ul a, .lines a { display: inline-block; padding: .7rem .25rem; }
 .nav .btn { margin-left: auto; padding: .6rem 1.2rem; font-size: .8rem; }
 
 /* buttons */
@@ -129,10 +129,21 @@ section > .wrap > h2 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 2.5rem;
 .kitchen img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); }
 .kitchen figcaption { margin-top: .6rem; font-size: .9rem; color: var(--muted); }
 
-/* footer */
+/* footer: contact as a kitchen order ticket */
 footer { padding-block: clamp(4rem, 8vw, 6rem); background: var(--surface); }
-.mail { font-family: "Bagel Fat One", sans-serif; font-size: clamp(1.6rem, 4.5vw, 3.5rem); overflow-wrap: anywhere; }
-.social { display: flex; gap: 1.5rem; margin-top: 1.5rem; font-weight: 600; }
+.ticket {
+  position: relative; max-width: 540px; padding: 1.75rem 1.75rem 2.25rem; background: #f6f7f4; color: #0e1a3c;
+  border-radius: 6px 6px 0 0; rotate: -.6deg; box-shadow: 0 14px 30px rgb(0 0 0 / .25);
+}
+.ticket::after { /* torn paper edge */
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 10px;
+  background: linear-gradient(135deg, #f6f7f4 25%, transparent 25%) -10px 0, linear-gradient(225deg, #f6f7f4 25%, transparent 25%) -10px 0; background-size: 20px 20px;
+}
+.ticket h2 { font-size: 1.1rem; padding-bottom: .9rem; margin-bottom: .9rem; border-bottom: 2px dashed rgb(14 26 60 / .35); }
+.mail { font-family: "Bagel Fat One", sans-serif; font-size: clamp(1.4rem, 3.6vw, 2.25rem); overflow-wrap: anywhere; }
+.lines { margin-top: 1rem; }
+.lines li { display: flex; align-items: baseline; gap: .6rem; font-weight: 600; }
+.lines li::after { content: ""; order: 1; flex: 1; border-bottom: 2px dotted rgb(14 26 60 / .35); }
 
 /* inner pages */
 .page-head { padding-block: 3rem 1rem; }
@@ -178,3 +189,24 @@ footer { padding-block: clamp(4rem, 8vw, 6rem); background: var(--surface); }
   .kitchen { grid-template-columns: repeat(2, 1fr); }
   .kitchen figure:nth-child(even) { margin-top: 1.5rem; }
 }
+
+/* recipe cards on the home page: index cards with a red top rule */
+.card {
+  padding: 1rem 1rem 1.25rem; background-color: #f6f7f4; color: #0e1a3c; border-top: 4px solid var(--accent); border-radius: var(--radius);
+  box-shadow: 0 14px 30px rgb(0 0 0 / .22);
+  background-image: repeating-linear-gradient(transparent 0 31px, rgb(31 63 154 / .1) 31px 32px);
+}
+.card:nth-child(2) { rotate: -.6deg; }
+.card:nth-child(3) { rotate: .5deg; }
+.card p { color: #44506f; }
+.card .tags li { border-color: rgb(14 26 60 / .35); }
+.card .tags::before { content: "Ingredients"; flex-basis: 100%; font: 700 .72rem/1 "Public Sans", sans-serif; letter-spacing: .12em; text-transform: uppercase; opacity: .65; }
+.card .more { display: inline-block; margin-top: .75rem; padding-block: .5rem; font-weight: 700; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: .3em; }
+
+/* the pantry: skills as labelled jars */
+.pantry { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2rem 1.25rem; }
+.jar { position: relative; display: flex; flex-direction: column; gap: .4rem; padding: 1.6rem 1rem 1rem; border: 2px solid var(--line); border-radius: 12px 12px 18px 18px; }
+.jar::before { content: ""; position: absolute; left: 18%; right: 18%; top: -12px; height: 12px; background: var(--line); border-radius: 5px 5px 0 0; }
+.jar .label { padding: .55rem .6rem; background: #f6f7f4; color: #0e1a3c; border-radius: 6px; font: 400 1.15rem/1.1 "Bagel Fat One", sans-serif; text-align: center; }
+.jar small { color: var(--muted); text-align: center; font-size: .8rem; }
+.jar:nth-child(odd) { margin-top: .75rem; }
