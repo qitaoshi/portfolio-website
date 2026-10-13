@@ -109,9 +109,10 @@ function build() {
   scene.environmentIntensity = 0.8;
 
   const camera = new THREE.PerspectiveCamera(12, 4 / 3, 0.1, 100); // narrow lens, far away: keeps the disc's near and far halves the same visual size
-  const tilt = THREE.MathUtils.degToRad(40);
-  camera.position.set(0, Math.sin(tilt) * 38, Math.cos(tilt) * 38);
-  camera.lookAt(0, 0, 0);
+  const tilt = THREE.MathUtils.degToRad(28); // camera elevation: lower = more side-on, higher = more top-down
+  const DIST = 29;
+  camera.position.set(0, 0.3 + Math.sin(tilt) * DIST, Math.cos(tilt) * DIST);
+  camera.lookAt(0, 0.3, 0); // aim a little above the glass so the standing cards are framed too
 
   const key = new THREE.DirectionalLight(0xfff1dc, 2.4);
   key.position.set(-6, 12, 7);
@@ -183,7 +184,7 @@ function build() {
   turn.add(plate, rim, hub);
 
   // four cards standing on small stands, one per project or recipe. The face is drawn on a canvas like the cards on the page.
-  const CW = 2.05, CH = 1.55, CARD_R = 3.45; // CARD_R plus half a stand must stay inside the glass radius
+  const CW = 1.92, CH = 1.45, CARD_R = 3.45; // CARD_R plus half a stand must stay inside the glass radius
   const standMat = new THREE.MeshStandardMaterial({ color: 0x2a1f18, roughness: 0.6 });
   const roundRect = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
   const faceTex = (b) => {
@@ -231,8 +232,8 @@ function build() {
     const bill = new THREE.Group(); // counter-rotated every frame so the card always faces the viewer, never edge-on or from behind
     const stand = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.07, 0.4), standMat);
     stand.position.set(0, 0.035, -0.05);
-    const lean = new THREE.Group(); // card leans back a little against its stand
-    lean.position.set(0, 0.07, 0); lean.rotation.x = -0.12;
+    const lean = new THREE.Group(); // card leans back against its stand, so at a low camera angle it does not hide the gold plate
+    lean.position.set(0, 0.07, 0); lean.rotation.x = -0.3;
     const face = faceTex(b);
     const mat = new THREE.MeshStandardMaterial({ map: face, emissive: 0xffffff, emissiveMap: face, emissiveIntensity: 0, roughness: 0.6, alphaTest: 0.5 });
     bill.userData.mat = mat; // the focus effect brightens the chosen card and dims the rest

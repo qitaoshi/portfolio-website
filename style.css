@@ -99,7 +99,7 @@ h1, h2, h3, .brand { font-family: "Bagel Fat One", system-ui, sans-serif; font-w
 
 /* lazy susan (3D, see susan.js) */
 .stage { width: min(100%, 780px); margin: 0 auto; }
-.susan { aspect-ratio: 4 / 3; cursor: grab; touch-action: pan-y; border-radius: var(--radius); }
+.susan { aspect-ratio: 16 / 10; cursor: grab; touch-action: pan-y; border-radius: var(--radius); }
 .picker { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .75rem; }
 .pick {
   padding: .45rem 1rem; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--text);
