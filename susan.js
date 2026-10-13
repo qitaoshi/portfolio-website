@@ -38,7 +38,7 @@ function canvasTex(size, draw, repeat) {
   draw(c.getContext("2d"), size);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = 16;
   if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping, t.repeat.set(repeat, repeat);
   return t;
 }
@@ -129,16 +129,16 @@ function build() {
   const R = 2.7; // plate ring radius
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio * 1.5, 3)); // supersampling: render more pixels than the screen has, so edges come out smooth
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.type = THREE.VSMShadowMap; // blurred shadows, like a large soft light
+  renderer.toneMapping = THREE.NeutralToneMapping; // keeps the palette true (AgX washed the blues and gold out)
   host.append(renderer.domElement);
   renderer.domElement.style.cssText = "display:block;width:100%;height:100%";
 
   const scene = new THREE.Scene();
   scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.8;
+  scene.environmentIntensity = 0.95;
 
   const camera = new THREE.PerspectiveCamera(12, 4 / 3, 0.1, 100); // narrow lens, far away: keeps the disc's near and far halves the same visual size
   const tilt = THREE.MathUtils.degToRad(28); // camera elevation: lower = more side-on, higher = more top-down
@@ -146,14 +146,15 @@ function build() {
   camera.position.set(0, 0.3 + Math.sin(tilt) * DIST, Math.cos(tilt) * DIST);
   camera.lookAt(0, 0.3, 0); // aim a little above the glass so the standing cards are framed too
 
-  const key = new THREE.DirectionalLight(0xfff1dc, 2.4);
+  const key = new THREE.DirectionalLight(0xfff1dc, 2.1);
   key.position.set(-6, 12, 7);
   key.castShadow = true;
-  key.shadow.mapSize.set(4096, 4096);
+  key.shadow.mapSize.set(2048, 2048);
   Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 40 });
-  key.shadow.radius = 3;
-  key.shadow.bias = -0.0005;
-  key.shadow.normalBias = 0.02;
+  key.shadow.radius = 6;
+  key.shadow.blurSamples = 20;
+  key.shadow.bias = -0.0002;
+  key.shadow.normalBias = 0.03;
   scene.add(key, new THREE.HemisphereLight(0xffffff, 0x1a2a55, 0.5));
 
   // plain dark table under the glass: glass needs something to refract, but no pattern to distract from it
@@ -232,9 +233,10 @@ function build() {
   const roundRect = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
   const faceTex = (b) => {
     const W = 800, H = Math.round((W * CH) / CW);
-    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const c = document.createElement("canvas"); c.width = W * 2; c.height = H * 2; // 2x texture, drawn in 800-wide coordinates
     const g = c.getContext("2d");
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    g.scale(2, 2);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16;
     const draw = (img) => {
       g.clearRect(0, 0, W, H);
       g.fillStyle = "#f3f5f1"; g.fillRect(0, 0, W, H); // the card geometry itself is rounded
@@ -334,7 +336,7 @@ function build() {
       bill.scale.setScalar(1 + f * 0.08);
       g.position.y = GLASS_H + f * 0.1; // chosen card lifts a little
       bill.userData.mat.color.setScalar(0.62 + 0.38 * f); // others dim
-      bill.userData.mat.emissiveIntensity = 0.2 * f; // chosen card glows
+      bill.userData.mat.emissiveIntensity = 0.08 * f; // chosen card glows
     });
     renderer.render(scene, camera);
     if (moving) raf = requestAnimationFrame(frame);
