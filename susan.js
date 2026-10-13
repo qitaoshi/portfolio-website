@@ -45,50 +45,82 @@ function canvasTex(size, draw, repeat) {
 
 // Blue-and-white porcelain props, like the teapots, bowls and cups on the banquet table in the reference photo.
 const cobalt = "#1f3f9a";
-const bwTex = (() => {
-  const c = document.createElement("canvas"); c.width = c.height = 256;
+const bwTex = (() => { // hand-painted rows: foot lines, lotus petals, scroll wave, shoulder lines, diamond band. v = 0 at the bottom of an object's profile.
+  const N = 1024, c = document.createElement("canvas"); c.width = c.height = N;
   const g = c.getContext("2d");
-  g.fillStyle = "#f6f6f2"; g.fillRect(0, 0, 256, 256);
-  g.fillStyle = cobalt;
-  const band = (v, h) => g.fillRect(0, (1 - v - h / 2) * 256, 256, h * 256);
-  band(0.4, 0.025); band(0.44, 0.012); band(0.6, 0.025); band(0.56, 0.012);
-  for (let k = 0; k < 16; k++) { g.beginPath(); g.arc(k * 16 + 8, 128, 3.2, 0, 7); g.fill(); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = THREE.RepeatWrapping;
+  g.fillStyle = "#f7f7f3"; g.fillRect(0, 0, N, N);
+  const y = (v) => (1 - v) * N;
+  g.strokeStyle = g.fillStyle = cobalt; g.lineJoin = g.lineCap = "round";
+  const line = (v, w = 5) => { g.lineWidth = w; g.beginPath(); g.moveTo(0, y(v)); g.lineTo(N, y(v)); g.stroke(); };
+  const P = 14; // repeats around the object, a whole number so the seam disappears
+  line(0.07, 6); line(0.095, 3);
+  for (let k = 0; k < P; k++) { // lotus petals
+    const x = ((k + 0.5) * N) / P, w = N / P / 2.1;
+    g.beginPath(); g.moveTo(x, y(0.12)); g.quadraticCurveTo(x - w, y(0.2), x, y(0.3)); g.quadraticCurveTo(x + w, y(0.2), x, y(0.12));
+    g.globalAlpha = 0.22; g.fill(); g.globalAlpha = 1; g.lineWidth = 4; g.stroke();
+    g.lineWidth = 3; g.beginPath(); g.moveTo(x, y(0.14)); g.lineTo(x, y(0.27)); g.stroke();
+  }
+  line(0.32, 3); line(0.34, 6);
+  g.lineWidth = 4; g.beginPath(); // scroll wave with dots
+  for (let x = 0; x <= N; x += 8) { const yy = y(0.4) + Math.sin((x / N) * Math.PI * 2 * P) * 14; if (x) g.lineTo(x, yy); else g.moveTo(x, yy); }
+  g.stroke();
+  for (let k = 0; k < P; k++) { g.beginPath(); g.arc(((k + 0.25) * N) / P, y(0.4) - 26, 4, 0, 7); g.fill(); }
+  line(0.46, 3); line(0.48, 6); line(0.52, 6); line(0.545, 3);
+  for (let k = 0; k < P * 2; k++) { // diamond band
+    const x = ((k + 0.5) * N) / (P * 2);
+    g.beginPath(); g.moveTo(x, y(0.6) - 14); g.lineTo(x + 10, y(0.6)); g.lineTo(x, y(0.6) + 14); g.lineTo(x - 10, y(0.6)); g.closePath(); g.fill();
+  }
+  line(0.7, 3); line(0.725, 6);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16; t.wrapS = THREE.RepeatWrapping;
   return t;
 })();
-const glaze = { roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide };
+const glaze = { roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.06, side: THREE.DoubleSide };
 const painted = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: bwTex, ...glaze });
 const plain = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f2, ...glaze });
-const smooth = (pts, n = 48) => new THREE.SplineCurve(pts.map(([x, y]) => new THREE.Vector2(x, y))).getPoints(n).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
-const lathe = (pts, mat = painted) => new THREE.Mesh(new THREE.LatheGeometry(smooth(pts), 64), mat);
-const tube = (pts, r, mat = plain) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y]) => new THREE.Vector3(x, y, 0))), 24, r, 12), mat);
+const smooth = (pts, n = 72) => new THREE.SplineCurve(pts.map(([x, y]) => new THREE.Vector2(x, y))).getPoints(n).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
+const lathe = (pts, mat = painted) => new THREE.Mesh(new THREE.LatheGeometry(smooth(pts), 96), mat);
+const tube = (pts, r, mat = plain) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y]) => new THREE.Vector3(x, y, 0))), 32, r, 16), mat);
 const shadowed = (g) => (g.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }), g);
 function teapot() {
   const g = new THREE.Group();
-  const body = lathe([[0, 0], [0.3, 0], [0.4, 0.015], [0.5, 0.1], [0.55, 0.26], [0.52, 0.42], [0.42, 0.54], [0.28, 0.6], [0.23, 0.63], [0.2, 0.67], [0.12, 0.73], [0.06, 0.76], [0, 0.77]]);
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 14), plain); knob.position.y = 0.8;
-  g.add(body, knob,
-    tube([[0.46, 0.2], [0.62, 0.28], [0.76, 0.44], [0.84, 0.56]], 0.055),
-    tube([[-0.5, 0.52], [-0.74, 0.5], [-0.78, 0.3], [-0.62, 0.14], [-0.48, 0.14]], 0.04));
+  // foot ring, belly, shoulder, lid flange, domed lid
+  const body = lathe([[0, 0.03], [0.22, 0.03], [0.24, 0], [0.32, 0], [0.34, 0.03], [0.42, 0.05], [0.5, 0.13], [0.55, 0.28], [0.52, 0.43], [0.43, 0.54], [0.3, 0.6], [0.29, 0.625], [0.31, 0.64], [0.26, 0.655], [0.22, 0.665], [0.17, 0.7], [0.1, 0.74], [0.05, 0.765], [0, 0.775]]);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 24, 16), plain); knob.position.y = 0.81;
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.05, 16), plain); neck.position.y = 0.78;
+  g.add(body, neck, knob,
+    tube([[0.44, 0.17], [0.6, 0.25], [0.74, 0.42], [0.84, 0.56]], 0.058),
+    tube([[-0.5, 0.52], [-0.74, 0.5], [-0.78, 0.3], [-0.62, 0.14], [-0.48, 0.14]], 0.045));
   return shadowed(g);
 }
-const bowl = () => shadowed(lathe([[0, 0], [0.2, 0], [0.26, 0.02], [0.4, 0.12], [0.52, 0.3], [0.57, 0.345], [0.5, 0.35], [0.37, 0.2], [0.23, 0.085], [0, 0.065]]));
+const bowl = () => shadowed(lathe([[0, 0.045], [0.17, 0.045], [0.18, 0], [0.25, 0], [0.27, 0.03], [0.4, 0.13], [0.52, 0.3], [0.57, 0.345], [0.5, 0.35], [0.37, 0.2], [0.23, 0.09], [0, 0.07]]));
 function teacup() { // cup on a saucer, no handle, like the tea cups in the photo
   const g = new THREE.Group();
   const cup = bowl(); cup.scale.setScalar(0.5); cup.position.y = 0.04;
-  g.add(lathe([[0, 0], [0.32, 0], [0.42, 0.05], [0.47, 0.105], [0.45, 0.115], [0.38, 0.08], [0.3, 0.035], [0, 0.03]], plain), cup);
+  g.add(lathe([[0, 0.02], [0.22, 0.02], [0.23, 0], [0.29, 0], [0.31, 0.03], [0.42, 0.055], [0.47, 0.105], [0.45, 0.115], [0.38, 0.085], [0.3, 0.045], [0, 0.04]], plain), cup);
   return shadowed(g);
 }
 function chopsticks() { // pair on a small plate
   const g = new THREE.Group();
-  g.add(lathe([[0, 0], [0.5, 0], [0.62, 0.05], [0.69, 0.115], [0.67, 0.13], [0.6, 0.105], [0.46, 0.05], [0, 0.04]])); // thick rolled rim, so the plate reads as a solid piece
+  g.add(lathe([[0, 0.03], [0.4, 0.03], [0.42, 0], [0.5, 0], [0.52, 0.035], [0.62, 0.06], [0.69, 0.115], [0.67, 0.13], [0.6, 0.105], [0.46, 0.06], [0, 0.05]]));
   const wood = new THREE.MeshStandardMaterial({ color: 0x6b2f22, roughness: 0.5 });
   for (const dz of [-0.05, 0.05]) {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.01, 1.3, 8), wood);
-    c.rotation.z = Math.PI / 2; c.rotation.y = 0.1 * Math.sign(dz); c.position.set(0.04, 0.07, dz * 1.5);
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.01, 1.3, 12), wood);
+    c.rotation.z = Math.PI / 2; c.rotation.y = 0.1 * Math.sign(dz); c.position.set(0.04, 0.075, dz * 1.5);
     g.add(c);
   }
   return shadowed(g);
+}
+
+// rounded card with real thickness; the face texture is mapped 0..1 across the front
+function cardGeo(w, h, r, depth) {
+  const sh = new THREE.Shape(), x = -w / 2;
+  sh.moveTo(x + r, 0); sh.lineTo(x + w - r, 0); sh.quadraticCurveTo(x + w, 0, x + w, r); sh.lineTo(x + w, h - r); sh.quadraticCurveTo(x + w, h, x + w - r, h);
+  sh.lineTo(x + r, h); sh.quadraticCurveTo(x, h, x, h - r); sh.lineTo(x, r); sh.quadraticCurveTo(x, 0, x + r, 0);
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelThickness: 0.012, bevelSize: 0.012, bevelSegments: 2, curveSegments: 10 });
+  const p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + w / 2) / w, p.getY(i) / h);
+  g.translate(0, 0, -depth / 2);
+  return g;
 }
 
 function build() {
@@ -117,9 +149,9 @@ function build() {
   const key = new THREE.DirectionalLight(0xfff1dc, 2.4);
   key.position.set(-6, 12, 7);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(4096, 4096);
   Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6, near: 1, far: 40 });
-  key.shadow.radius = 4;
+  key.shadow.radius = 3;
   key.shadow.bias = -0.0005;
   key.shadow.normalBias = 0.02;
   scene.add(key, new THREE.HemisphereLight(0xffffff, 0x1a2a55, 0.5));
@@ -134,6 +166,17 @@ function build() {
 
   const turn = new THREE.Group();
   scene.add(turn);
+  // soft contact shadows under everything, so objects sit on the glass instead of floating over it
+  const blobTex = canvasTex(128, (g, sz) => {
+    const gr = g.createRadialGradient(sz / 2, sz / 2, 0, sz / 2, sz / 2, sz / 2);
+    gr.addColorStop(0, "rgba(0,0,0,.5)"); gr.addColorStop(0.6, "rgba(0,0,0,.22)"); gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr; g.fillRect(0, 0, sz, sz);
+  });
+  const blob = (x, z, r) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(r * 2, r * 2), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, GLASS_H + 0.003, z);
+    turn.add(m);
+  };
 
   const glass = new THREE.Mesh(
     new THREE.CylinderGeometry(D, D, GLASS_H, 128),
@@ -194,7 +237,7 @@ function build() {
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
     const draw = (img) => {
       g.clearRect(0, 0, W, H);
-      roundRect(g, 0, 0, W, H, 36); g.fillStyle = "#f3f5f1"; g.fill();
+      g.fillStyle = "#f3f5f1"; g.fillRect(0, 0, W, H); // the card geometry itself is rounded
       if (img) {
         g.save(); roundRect(g, 24, 24, W - 48, 380, 22); g.clip();
         const k = Math.max((W - 48) / img.width, 380 / img.height);
@@ -229,16 +272,16 @@ function build() {
     const g = new THREE.Group();
     g.position.set(CARD_R * Math.sin(th), GLASS_H, CARD_R * Math.cos(th));
     g.userData.i = i;
+    blob(g.position.x, g.position.z, 0.95);
     const bill = new THREE.Group(); // counter-rotated every frame so the card always faces the viewer, never edge-on or from behind
     const stand = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.07, 0.4), standMat);
     stand.position.set(0, 0.035, -0.05);
     const lean = new THREE.Group(); // card leans back against its stand, so at a low camera angle it does not hide the gold plate
     lean.position.set(0, 0.07, 0); lean.rotation.x = -0.3;
     const face = faceTex(b);
-    const mat = new THREE.MeshStandardMaterial({ map: face, emissive: 0xffffff, emissiveMap: face, emissiveIntensity: 0, roughness: 0.6, alphaTest: 0.5 });
+    const mat = new THREE.MeshStandardMaterial({ map: face, emissive: 0xffffff, emissiveMap: face, emissiveIntensity: 0, roughness: 0.6 });
     bill.userData.mat = mat; // the focus effect brightens the chosen card and dims the rest
-    const front = new THREE.Mesh(new THREE.PlaneGeometry(CW, CH), mat);
-    front.position.y = CH / 2;
+    const front = new THREE.Mesh(cardGeo(CW, CH, 0.09, 0.035), [mat, new THREE.MeshStandardMaterial({ color: 0xd9dde6, roughness: 0.8 })]); // [face, edge]
     for (const m of [stand, front]) m.castShadow = m.receiveShadow = true;
     lean.add(front);
     bill.add(stand, lean);
@@ -248,18 +291,19 @@ function build() {
   });
 
   // clutter between the cards (diagonal slots), so the table feels used
-  const place = (obj, deg, r, yaw = 0, scale = 1) => {
+  const place = (obj, deg, r, yaw = 0, scale = 1, foot = 0.7) => {
     const th = (deg * Math.PI) / 180;
+    blob(r * Math.sin(th), r * Math.cos(th), foot * scale * 1.25);
     obj.position.set(r * Math.sin(th), GLASS_H, r * Math.cos(th));
     obj.rotation.y = yaw; obj.scale.setScalar(scale);
     turn.add(obj);
   };
-  place(teapot(), 45, 2.45, -0.3);
-  place(teapot(), 315, 2.45, Math.PI + 0.3);
-  place(bowl(), 135, 2.5, 0, 1.05);
+  place(teapot(), 45, 2.45, -0.3, 1, 0.8);
+  place(teapot(), 315, 2.45, Math.PI + 0.3, 1, 0.8);
+  place(bowl(), 135, 2.5, 0, 1.05, 0.6);
   place(chopsticks(), 225, 2.5, 0.3);
-  place(teacup(), 72, 3.1);
-  place(teacup(), 252, 3.2);
+  place(teacup(), 72, 3.1, 0, 1, 0.45);
+  place(teacup(), 252, 3.2, 0, 1, 0.45);
 
   // motion: a damped spring turns the table, so a flick keeps going and settles with a small overshoot (damping ratio about 0.73)
   let angle = 0, target = 0, av = 0, k = 0, dragging = false, raf = 0, last = 0;
