@@ -201,12 +201,15 @@ function build() {
         g.restore();
       }
       g.fillStyle = "#0e1a3c"; g.textBaseline = "alphabetic";
-      g.font = '50px "Bagel Fat One", sans-serif';
+      let size = 50; // shrink long titles to fit instead of squashing the letters
+      g.font = `${size}px "Bagel Fat One", sans-serif`;
+      while (size > 30 && g.measureText(b.dataset.title).width > W - 56) g.font = `${--size}px "Bagel Fat One", sans-serif`;
       g.fillText(b.dataset.title, 28, 478, W - 56);
       g.font = '700 26px "Public Sans", sans-serif';
       let x = 28;
       for (const tag of b.dataset.stack.split(",").map((v) => v.trim())) {
         const w = g.measureText(tag).width + 32;
+        if (x + w > W - 28) break; // no room left on the card: drop the extra tags
         roundRect(g, x, 508, w, 44, 22); g.strokeStyle = "rgba(14,26,60,.45)"; g.lineWidth = 2; g.stroke();
         g.fillStyle = "#0e1a3c"; g.fillText(tag, x + 16, 539);
         x += w + 10;
