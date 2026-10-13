@@ -2,6 +2,7 @@
 // Light and environment are fixed in the scene and only the turntable rotates, so reflections stay put like real glass.
 import * as THREE from "three";
 import { RoomEnvironment } from "./vendor/RoomEnvironment.js";
+import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
 
 const host = document.getElementById("susan");
 const picks = [...document.querySelectorAll(".pick")];
@@ -52,7 +53,8 @@ const bwTex = (() => {
   g.fillStyle = cobalt;
   const band = (v, h) => g.fillRect(0, (1 - v - h / 2) * 256, 256, h * 256);
   band(0.4, 0.025); band(0.44, 0.012); band(0.6, 0.025); band(0.56, 0.012);
-  for (let k = 0; k < 16; k++) { g.beginPath(); g.arc(k * 16 + 8, 128, 3.2, 0, 7); g.fill(); }
+  g.strokeStyle = cobalt; g.lineWidth = 2.4; // a row of bits: 0 is a ring, 1 is a bar
+  for (let k = 0; k < 16; k++) { const one = ((k * 7 + 3) % 5) % 2; g.beginPath(); if (one) g.rect(k * 16 + 5, 123, 6, 10); else g.ellipse(k * 16 + 8, 128, 3.2, 5, 0, 0, 7); one ? g.fill() : g.stroke(); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = THREE.RepeatWrapping;
   return t;
 })();
@@ -93,11 +95,11 @@ function chopsticks() { // pair on a small plate
 
 function build() {
   const D = 4; // glass radius
-  const GLASS_H = 0.14;
+  const GLASS_H = 0.22; // thick enough that the glass top reads as the lazy susan
   const R = 2.7; // plate ring radius
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 3));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -128,23 +130,24 @@ function build() {
   table.position.y = -0.22; // just under the glass, like a real banquet table
   table.receiveShadow = true;
   const bearing = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0x15191a, metalness: 0.8, roughness: 0.4 }));
-  bearing.position.y = -0.06;
+  bearing.position.y = -0.06; bearing.visible = false; // shown again below only if the Blender model fails to load
   scene.add(table, bearing);
 
   const turn = new THREE.Group();
   scene.add(turn);
+  const props = new THREE.Group(); // the table setting: hidden until the Blender models load, so the code-drawn stand-ins never flash
+  props.visible = false;
+  turn.add(props);
 
-  const glass = new THREE.Mesh(
-    new THREE.CylinderGeometry(D, D, GLASS_H, 128),
-    new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 1, ior: 1.5, thickness: GLASS_H, roughness: 0.04, specularIntensity: 0.5, attenuationColor: 0xcfe8e0, attenuationDistance: 1.2 })
-  );
+  const glassMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 1, ior: 1.5, thickness: 0.08, roughness: 0.05, specularIntensity: 1, envMapIntensity: 1.5, attenuationColor: 0xa8dcc8, attenuationDistance: 0.4 });
+  const glass = new THREE.Mesh(new THREE.CylinderGeometry(D, D, GLASS_H, 128), glassMat);
   glass.position.y = GLASS_H / 2;
   glass.receiveShadow = true;
   // polished edge: the bright line along the rim in the reference photo
-  const edge = new THREE.Mesh(new THREE.TorusGeometry(D, 0.05, 16, 160), new THREE.MeshPhysicalMaterial({ color: 0xe4f3ef, roughness: 0.08, transparent: true, opacity: 0.6 }));
+  const edge = new THREE.Mesh(new THREE.TorusGeometry(D, 0.05, 16, 160), new THREE.MeshPhysicalMaterial({ color: 0xf2fffb, roughness: 0.05, transparent: true, opacity: 0.85, emissive: 0x9fe0cc, emissiveIntensity: 0.25 }));
   edge.rotation.x = Math.PI / 2;
   edge.position.y = GLASS_H / 2;
-  turn.add(glass, edge);
+  props.add(glass, edge);
 
   // gold plate (approximate relief: the reference photo is blurred there)
   const emboss = canvasTex(512, (g, s) => {
@@ -180,7 +183,7 @@ function build() {
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.07, 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: brush, metalness: 1, roughness: 0.3, anisotropy: 0.8 }));
   hub.position.y = GLASS_H + 0.085;
   for (const m of [plate, rim, hub]) m.castShadow = m.receiveShadow = true;
-  turn.add(plate, rim, hub);
+  props.add(plate, rim, hub);
 
   // four cards standing on small stands, one per project or recipe. The face is drawn on a canvas like the cards on the page.
   const CW = 2.2, CH = 1.65;
@@ -226,7 +229,8 @@ function build() {
   const cards = picks.map((b, i) => {
     const th = (i * Math.PI) / 2;
     const g = new THREE.Group();
-    g.position.set(3.3 * Math.sin(th), GLASS_H, 3.3 * Math.cos(th));
+    g.position.set(3.5 * Math.sin(th), GLASS_H, 3.5 * Math.cos(th));
+    g.scale.setScalar(0.8); // smaller cards hide less of the table behind them
     g.userData.i = i;
     const bill = new THREE.Group(); // counter-rotated every frame so the card always faces the viewer, never edge-on or from behind
     const stand = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.07, 0.4), standMat);
@@ -248,14 +252,40 @@ function build() {
     const th = (deg * Math.PI) / 180;
     obj.position.set(r * Math.sin(th), GLASS_H, r * Math.cos(th));
     obj.rotation.y = yaw; obj.scale.setScalar(scale);
-    turn.add(obj);
+    props.add(obj);
+    return obj;
   };
-  place(teapot(), 45, 2.45, -0.3);
-  place(teapot(), 315, 2.45, Math.PI + 0.3);
+  const teapots = [place(teapot(), 45, 2.5, -0.3), place(teapot(), 315, 2.5, Math.PI + 0.3)];
   place(bowl(), 135, 2.5, 0, 1.05);
-  place(chopsticks(), 225, 2.5, 0.3);
-  place(teacup(), 72, 3.1);
-  place(teacup(), 252, 3.2);
+  const sticks = [place(chopsticks(), 225, 2.0, 0.3)];
+  const cups = [place(teacup(), 72, 3.4), place(teacup(), 288, 3.4)];
+
+  // Blender models replace the code-built shapes once they load; if a file fails, the code version stays.
+  const loader = new GLTFLoader();
+  const aniso = renderer.capabilities.getMaxAnisotropy();
+  const load = (name) => loader.loadAsync(`models/${name}.glb`).then((g) => {
+    g.scene.traverse((o) => { if (o.isMesh) for (const t of Object.values(o.material)) if (t?.isTexture) t.anisotropy = aniso; }); // sharp patterns at a grazing angle
+    return shadowed(g.scene);
+  });
+  const swap = (olds, name) => load(name).then((model) => {
+    for (const old of olds) {
+      const m = model.clone();
+      m.position.copy(old.position); m.rotation.copy(old.rotation); m.scale.copy(old.scale);
+      props.remove(old); props.add(m);
+    }
+    kick();
+  }).catch(() => {});
+  const loaded = [swap(teapots, "teapot"), swap(sticks, "chopsticks"), swap(cups, "teacup")];
+  loaded.push(load("susan").then((model) => {
+    // Blender glass with its rounded edge; the original gold plate and hub drop under it and spin with it
+    const pane = model.getObjectByName("Glass");
+    pane.material = glassMat; pane.castShadow = false; pane.receiveShadow = true;
+    pane.scale.y = GLASS_H / 0.14; // the model is 0.14 thick
+    props.remove(glass); props.add(pane);
+    plate.position.y = -0.075; rim.position.y = -0.05; hub.position.y = -0.04;
+    scene.remove(bearing); // the hub covers it, and it would poke through the plate
+  }).catch(() => {}));
+  Promise.all(loaded).then(() => { props.visible = bearing.visible = true; kick(); }); // all at once; any file that failed leaves its code-drawn version
 
   // motion
   let angle = 0, target = 0, k = 0, dragging = false, raf = 0, last = 0;
