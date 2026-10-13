@@ -72,20 +72,20 @@ function teapot() {
     tube([[-0.5, 0.52], [-0.74, 0.5], [-0.78, 0.3], [-0.62, 0.14], [-0.48, 0.14]], 0.04));
   return shadowed(g);
 }
-const bowl = () => shadowed(lathe([[0, 0], [0.2, 0], [0.26, 0.02], [0.4, 0.12], [0.52, 0.3], [0.54, 0.34], [0.5, 0.34], [0.38, 0.18], [0.24, 0.06], [0, 0.04]]));
+const bowl = () => shadowed(lathe([[0, 0], [0.2, 0], [0.26, 0.02], [0.4, 0.12], [0.52, 0.3], [0.57, 0.345], [0.5, 0.35], [0.37, 0.2], [0.23, 0.085], [0, 0.065]]));
 function teacup() { // cup on a saucer, no handle, like the tea cups in the photo
   const g = new THREE.Group();
-  const cup = bowl(); cup.scale.setScalar(0.5); cup.position.y = 0.02;
-  g.add(lathe([[0, 0], [0.32, 0], [0.42, 0.035], [0.4, 0.04], [0.3, 0.018], [0, 0.015]], plain), cup);
+  const cup = bowl(); cup.scale.setScalar(0.5); cup.position.y = 0.04;
+  g.add(lathe([[0, 0], [0.32, 0], [0.42, 0.05], [0.47, 0.105], [0.45, 0.115], [0.38, 0.08], [0.3, 0.035], [0, 0.03]], plain), cup);
   return shadowed(g);
 }
 function chopsticks() { // pair on a small plate
   const g = new THREE.Group();
-  g.add(lathe([[0, 0], [0.5, 0], [0.64, 0.04], [0.62, 0.046], [0.46, 0.02], [0, 0.018]]));
+  g.add(lathe([[0, 0], [0.5, 0], [0.62, 0.05], [0.69, 0.115], [0.67, 0.13], [0.6, 0.105], [0.46, 0.05], [0, 0.04]])); // thick rolled rim, so the plate reads as a solid piece
   const wood = new THREE.MeshStandardMaterial({ color: 0x6b2f22, roughness: 0.5 });
   for (const dz of [-0.05, 0.05]) {
     const c = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.01, 1.3, 8), wood);
-    c.rotation.z = Math.PI / 2; c.rotation.y = 0.1 * Math.sign(dz); c.position.set(0.04, 0.045, dz * 1.5);
+    c.rotation.z = Math.PI / 2; c.rotation.y = 0.1 * Math.sign(dz); c.position.set(0.04, 0.07, dz * 1.5);
     g.add(c);
   }
   return shadowed(g);
