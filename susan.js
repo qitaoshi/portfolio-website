@@ -285,15 +285,42 @@ function build() {
     plate.position.y = -0.075; rim.position.y = -0.05; hub.position.y = -0.04;
     scene.remove(bearing); // the hub covers it, and it would poke through the plate
   }).catch(() => {}));
-  Promise.all(loaded).then(() => { props.visible = bearing.visible = true; kick(); }); // all at once; any file that failed leaves its code-drawn version
+  Promise.all(loaded).then(() => { // all at once; any file that failed leaves its code-drawn version
+    props.visible = bearing.visible = true;
+    if (!reduce) { // intro: the table lowers in, then the dishes drop onto it one by one
+      const objs = [...cards.map((g) => g.children[0]), ...props.children.filter((o) => Math.hypot(o.position.x, o.position.z) > 1)];
+      intro = { t0: performance.now(), dishes: objs.map((o) => ({ o, y: o.position.y })) };
+      turn.position.y = 6;
+      intro.dishes.forEach(({ o }) => (o.visible = false));
+    }
+    kick();
+  });
 
   // motion
-  let angle = 0, target = 0, k = 0, dragging = false, raf = 0, last = 0;
+  let angle = 0, target = 0, k = 0, dragging = false, raf = 0, last = 0, intro = null;
+  const bounce = (t) => (t < 1 / 2.75 ? 7.5625 * t * t : t < 2 / 2.75 ? 7.5625 * (t -= 1.5 / 2.75) * t + 0.75 : t < 2.5 / 2.75 ? 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375 : 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375);
+  const introEnd = () => { // also the skip: put everything back where it belongs
+    turn.position.y = 0;
+    intro.dishes.forEach(({ o, y }) => { o.visible = true; o.position.y = y; });
+    intro = null;
+  };
+  const introStep = (now) => {
+    const s = (now - intro.t0) / 1000, u = Math.min(s / 0.8, 1);
+    turn.position.y = 6 * (1 - u) ** 3; // easeOutCubic: settles with no bounce
+    const n = intro.dishes.length;
+    intro.dishes.forEach(({ o, y }, i) => {
+      const v = (s - 0.55 - i * 0.07) / 0.55; // staggered; each falls 4 units and bounces
+      o.visible = v >= 0;
+      o.position.y = y + 4 * (1 - bounce(Math.min(Math.max(v, 0), 1)));
+    });
+    if (s > 0.55 + n * 0.07 + 0.55) introEnd();
+  };
   const frame = (now) => {
     raf = 0;
     const dt = Math.min(Math.max((now - last) / 1000 || 0.016, 0.001), 0.05); // rAF time can read earlier than performance.now(), so never let dt go negative
     last = now;
     let moving = dragging;
+    if (intro) { introStep(now); moving = true; }
     if (!dragging) {
       const d = target - angle;
       if (Math.abs(d) > 0.0005) { angle += reduce ? d : d * (1 - Math.exp(-dt * 7)); moving = true; } else angle = target;
@@ -328,6 +355,7 @@ function build() {
   let startX = 0, lastX = 0, vel = 0, moved = 0;
   const el = renderer.domElement;
   el.addEventListener("pointerdown", (e) => {
+    if (intro) introEnd(); // a touch skips the intro
     dragging = true; startX = lastX = e.clientX; vel = 0; moved = 0;
     el.setPointerCapture(e.pointerId);
     host.style.cursor = "grabbing";
