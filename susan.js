@@ -183,7 +183,7 @@ function build() {
   turn.add(plate, rim, hub);
 
   // four cards standing on small stands, one per project or recipe. The face is drawn on a canvas like the cards on the page.
-  const CW = 2.2, CH = 1.65;
+  const CW = 2.05, CH = 1.55, CARD_R = 3.45; // CARD_R plus half a stand must stay inside the glass radius
   const standMat = new THREE.MeshStandardMaterial({ color: 0x2a1f18, roughness: 0.6 });
   const roundRect = (g, x, y, w, h, r) => { g.beginPath(); g.roundRect(x, y, w, h, r); };
   const faceTex = (b) => {
@@ -226,14 +226,17 @@ function build() {
   const cards = picks.map((b, i) => {
     const th = (i * Math.PI) / 2;
     const g = new THREE.Group();
-    g.position.set(3.3 * Math.sin(th), GLASS_H, 3.3 * Math.cos(th));
+    g.position.set(CARD_R * Math.sin(th), GLASS_H, CARD_R * Math.cos(th));
     g.userData.i = i;
     const bill = new THREE.Group(); // counter-rotated every frame so the card always faces the viewer, never edge-on or from behind
-    const stand = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.07, 0.4), standMat);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.07, 0.4), standMat);
     stand.position.set(0, 0.035, -0.05);
     const lean = new THREE.Group(); // card leans back a little against its stand
     lean.position.set(0, 0.07, 0); lean.rotation.x = -0.12;
-    const front = new THREE.Mesh(new THREE.PlaneGeometry(CW, CH), new THREE.MeshStandardMaterial({ map: faceTex(b), roughness: 0.6, alphaTest: 0.5 }));
+    const face = faceTex(b);
+    const mat = new THREE.MeshStandardMaterial({ map: face, emissive: 0xffffff, emissiveMap: face, emissiveIntensity: 0, roughness: 0.6, alphaTest: 0.5 });
+    bill.userData.mat = mat; // the focus effect brightens the chosen card and dims the rest
+    const front = new THREE.Mesh(new THREE.PlaneGeometry(CW, CH), mat);
     front.position.y = CH / 2;
     for (const m of [stand, front]) m.castShadow = m.receiveShadow = true;
     lean.add(front);
@@ -257,23 +260,36 @@ function build() {
   place(teacup(), 72, 3.1);
   place(teacup(), 252, 3.2);
 
-  // motion
-  let angle = 0, target = 0, k = 0, dragging = false, raf = 0, last = 0;
+  // motion: a damped spring turns the table, so a flick keeps going and settles with a small overshoot (damping ratio about 0.73)
+  let angle = 0, target = 0, av = 0, k = 0, dragging = false, raf = 0, last = 0;
+  const SPRING = 120, DAMP = 16, STEP = 1 / 240;
+  const focus = cards.map(() => 0); // 0 = resting, 1 = chosen card
   const frame = (now) => {
     raf = 0;
     const dt = Math.min(Math.max((now - last) / 1000 || 0.016, 0.001), 0.05); // rAF time can read earlier than performance.now(), so never let dt go negative
     last = now;
     let moving = dragging;
     if (!dragging) {
-      const d = target - angle;
-      if (Math.abs(d) > 0.0005) { angle += reduce ? d : d * (1 - Math.exp(-dt * 7)); moving = true; } else angle = target;
+      if (reduce) { angle = target; av = 0; }
+      else for (let t = 0; t < dt; t += STEP) { // fixed sub-steps keep the spring stable on slow frames
+        const h = Math.min(STEP, dt - t);
+        av += (-SPRING * (angle - target) - DAMP * av) * h;
+        angle += av * h;
+      }
+      if (Math.abs(angle - target) > 0.0005 || Math.abs(av) > 0.01) moving = true; else { angle = target; av = 0; }
     }
     turn.rotation.y = angle;
-    cards.forEach((g) => (g.children[0].rotation.y = -angle));
+    const live = dragging ? ((Math.round(-angle / (Math.PI / 2)) % 4) + 4) % 4 : idx; // while dragging, focus follows whichever card is nearest the front
     cards.forEach((g, i) => {
-      const ty = GLASS_H + (i === idx ? 0.1 : 0); // the chosen dish lifts a little
-      const d = ty - g.position.y;
-      if (Math.abs(d) > 0.0005) { g.position.y += reduce ? d : d * (1 - Math.exp(-dt * 9)); moving = true; } else g.position.y = ty;
+      const goal = i === live ? 1 : 0;
+      const d = goal - focus[i];
+      if (Math.abs(d) > 0.002) { focus[i] += reduce ? d : d * (1 - Math.exp(-dt * 10)); moving = true; } else focus[i] = goal;
+      const f = focus[i], bill = g.children[0];
+      bill.rotation.y = -angle;
+      bill.scale.setScalar(1 + f * 0.08);
+      g.position.y = GLASS_H + f * 0.1; // chosen card lifts a little
+      bill.userData.mat.color.setScalar(0.62 + 0.38 * f); // others dim
+      bill.userData.mat.emissiveIntensity = 0.2 * f; // chosen card glows
     });
     renderer.render(scene, camera);
     if (moving) raf = requestAnimationFrame(frame);
@@ -295,10 +311,10 @@ function build() {
 
   // drag to spin, release to snap to the nearest dish. A click without movement picks the dish under the pointer.
   const ray = new THREE.Raycaster();
-  let startX = 0, lastX = 0, vel = 0, moved = 0;
+  let lastX = 0, lastT = 0, vel = 0, moved = 0; // vel in rad/s
   const el = renderer.domElement;
   el.addEventListener("pointerdown", (e) => {
-    dragging = true; startX = lastX = e.clientX; vel = 0; moved = 0;
+    dragging = true; lastX = e.clientX; lastT = e.timeStamp; vel = 0; av = 0; moved = 0;
     el.setPointerCapture(e.pointerId);
     host.style.cursor = "grabbing";
     kick();
@@ -308,8 +324,10 @@ function build() {
     const dx = e.clientX - lastX;
     lastX = e.clientX;
     moved += Math.abs(dx);
-    vel = dx * 0.008;
-    angle += vel;
+    const dtp = Math.max(e.timeStamp - lastT, 1) / 1000;
+    lastT = e.timeStamp;
+    vel = vel * 0.5 + ((dx * 0.008) / dtp) * 0.5; // smoothed
+    angle += dx * 0.008;
     kick();
   });
   const end = (e) => {
@@ -322,8 +340,10 @@ function build() {
       const hit = ray.intersectObjects(cards, true)[0];
       if (hit) { let o = hit.object; while (o.userData.i === undefined) o = o.parent; spinTo(o.userData.i); panel(o.userData.i); return; }
     }
-    k = Math.round(-(angle + vel * 12) / (Math.PI / 2));
+    const v = Math.max(-14, Math.min(14, e.timeStamp - lastT > 80 ? 0 : vel)); // paused before letting go: no momentum
+    k = Math.round(-(angle + v * 0.15) / (Math.PI / 2)); // land on the card the flick was heading for
     target = (-k * Math.PI) / 2;
+    av = v; // hand the release speed to the spring
     panel(((k % 4) + 4) % 4);
     kick();
   };
