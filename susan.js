@@ -44,54 +44,7 @@ function canvasTex(size, draw, repeat) {
   return t;
 }
 
-// Blue-and-white porcelain props, like the teapots, bowls and cups on the banquet table in the reference photo.
-const cobalt = "#1f3f9a";
-const bwTex = (() => {
-  const c = document.createElement("canvas"); c.width = c.height = 256;
-  const g = c.getContext("2d");
-  g.fillStyle = "#f6f6f2"; g.fillRect(0, 0, 256, 256);
-  g.fillStyle = cobalt;
-  const band = (v, h) => g.fillRect(0, (1 - v - h / 2) * 256, 256, h * 256);
-  band(0.4, 0.025); band(0.44, 0.012); band(0.6, 0.025); band(0.56, 0.012);
-  g.strokeStyle = cobalt; g.lineWidth = 2.4; // a row of bits: 0 is a ring, 1 is a bar
-  for (let k = 0; k < 16; k++) { const one = ((k * 7 + 3) % 5) % 2; g.beginPath(); if (one) g.rect(k * 16 + 5, 123, 6, 10); else g.ellipse(k * 16 + 8, 128, 3.2, 5, 0, 0, 7); one ? g.fill() : g.stroke(); }
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = THREE.RepeatWrapping;
-  return t;
-})();
-const glaze = { roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide };
-const painted = new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: bwTex, ...glaze });
-const plain = new THREE.MeshPhysicalMaterial({ color: 0xf6f6f2, ...glaze });
-const smooth = (pts, n = 48) => new THREE.SplineCurve(pts.map(([x, y]) => new THREE.Vector2(x, y))).getPoints(n).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
-const lathe = (pts, mat = painted) => new THREE.Mesh(new THREE.LatheGeometry(smooth(pts), 64), mat);
-const tube = (pts, r, mat = plain) => new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y]) => new THREE.Vector3(x, y, 0))), 24, r, 12), mat);
 const shadowed = (g) => (g.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }), g);
-function teapot() {
-  const g = new THREE.Group();
-  const body = lathe([[0, 0], [0.3, 0], [0.4, 0.015], [0.5, 0.1], [0.55, 0.26], [0.52, 0.42], [0.42, 0.54], [0.28, 0.6], [0.23, 0.63], [0.2, 0.67], [0.12, 0.73], [0.06, 0.76], [0, 0.77]]);
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 20, 14), plain); knob.position.y = 0.8;
-  g.add(body, knob,
-    tube([[0.46, 0.2], [0.62, 0.28], [0.76, 0.44], [0.84, 0.56]], 0.055),
-    tube([[-0.5, 0.52], [-0.74, 0.5], [-0.78, 0.3], [-0.62, 0.14], [-0.48, 0.14]], 0.04));
-  return shadowed(g);
-}
-const bowl = () => shadowed(lathe([[0, 0], [0.2, 0], [0.26, 0.02], [0.4, 0.12], [0.52, 0.3], [0.54, 0.34], [0.5, 0.34], [0.38, 0.18], [0.24, 0.06], [0, 0.04]]));
-function teacup() { // cup on a saucer, no handle, like the tea cups in the photo
-  const g = new THREE.Group();
-  const cup = bowl(); cup.scale.setScalar(0.5); cup.position.y = 0.02;
-  g.add(lathe([[0, 0], [0.32, 0], [0.42, 0.035], [0.4, 0.04], [0.3, 0.018], [0, 0.015]], plain), cup);
-  return shadowed(g);
-}
-function chopsticks() { // pair on a small plate
-  const g = new THREE.Group();
-  g.add(lathe([[0, 0], [0.5, 0], [0.64, 0.04], [0.62, 0.046], [0.46, 0.02], [0, 0.018]]));
-  const wood = new THREE.MeshStandardMaterial({ color: 0x6b2f22, roughness: 0.5 });
-  for (const dz of [-0.05, 0.05]) {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.01, 1.3, 8), wood);
-    c.rotation.z = Math.PI / 2; c.rotation.y = 0.1 * Math.sign(dz); c.position.set(0.04, 0.045, dz * 1.5);
-    g.add(c);
-  }
-  return shadowed(g);
-}
 
 function build() {
   const D = 4; // glass radius
@@ -129,9 +82,7 @@ function build() {
   const table = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.2, 96), new THREE.MeshStandardMaterial({ color: 0x101c3f, roughness: 0.7 }));
   table.position.y = -0.22; // just under the glass, like a real banquet table
   table.receiveShadow = true;
-  const bearing = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0x15191a, metalness: 0.8, roughness: 0.4 }));
-  bearing.position.y = -0.06; bearing.visible = false; // shown again below only if the Blender model fails to load
-  scene.add(table, bearing);
+  scene.add(table);
 
   const turn = new THREE.Group();
   scene.add(turn);
@@ -247,46 +198,35 @@ function build() {
     return g;
   });
 
-  // clutter between the cards (diagonal slots), so the table feels used
-  const place = (obj, deg, r, yaw = 0, scale = 1) => {
+  // table setting: Blender models placed in the diagonal slots between the cards
+  const place = (obj, deg, r, yaw = 0) => {
     const th = (deg * Math.PI) / 180;
     obj.position.set(r * Math.sin(th), GLASS_H, r * Math.cos(th));
-    obj.rotation.y = yaw; obj.scale.setScalar(scale);
+    obj.rotation.y = yaw;
     props.add(obj);
-    return obj;
   };
-  const teapots = [place(teapot(), 45, 2.5, -0.3), place(teapot(), 315, 2.5, Math.PI + 0.3)];
-  place(bowl(), 135, 2.5, 0, 1.05);
-  const sticks = [place(chopsticks(), 225, 2.0, 0.3)];
-  const cups = [place(teacup(), 72, 3.4), place(teacup(), 288, 3.4)];
-
-  // Blender models replace the code-built shapes once they load; if a file fails, the code version stays.
   const loader = new GLTFLoader();
   const aniso = renderer.capabilities.getMaxAnisotropy();
   const load = (name) => loader.loadAsync(`models/${name}.glb`).then((g) => {
     g.scene.traverse((o) => { if (o.isMesh) for (const t of Object.values(o.material)) if (t?.isTexture) t.anisotropy = aniso; }); // sharp patterns at a grazing angle
     return shadowed(g.scene);
   });
-  const swap = (olds, name) => load(name).then((model) => {
-    for (const old of olds) {
-      const m = model.clone();
-      m.position.copy(old.position); m.rotation.copy(old.rotation); m.scale.copy(old.scale);
-      props.remove(old); props.add(m);
-    }
-    kick();
-  }).catch(() => {});
-  const loaded = [swap(teapots, "teapot"), swap(sticks, "chopsticks"), swap(cups, "teacup")];
-  loaded.push(load("susan").then((model) => {
-    // Blender glass with its rounded edge; the original gold plate and hub drop under it and spin with it
-    const pane = model.getObjectByName("Glass");
-    pane.material = glassMat; pane.castShadow = false; pane.receiveShadow = true;
-    pane.scale.y = GLASS_H / 0.14; // the model is 0.14 thick
-    props.remove(glass); props.add(pane);
-    plate.position.y = -0.075; rim.position.y = -0.05; hub.position.y = -0.04;
-    scene.remove(bearing); // the hub covers it, and it would poke through the plate
-  }).catch(() => {}));
-  Promise.all(loaded).then(() => { // all at once; any file that failed leaves its code-drawn version
-    props.visible = bearing.visible = true;
+  const dish = (name, slots) => load(name).then((model) => slots.forEach((s) => place(model.clone(), ...s)));
+  const loaded = [
+    dish("teapot", [[45, 2.5, -0.3], [315, 2.5, Math.PI + 0.3]]),
+    dish("chopsticks", [[225, 2.0, 0.3]]),
+    dish("teacup", [[72, 3.4], [288, 3.4]]),
+    load("susan").then((model) => {
+      // Blender glass with its rounded edge; the gold plate and hub drop under it and spin with it
+      const pane = model.getObjectByName("Glass");
+      pane.material = glassMat; pane.castShadow = false; pane.receiveShadow = true;
+      pane.scale.y = GLASS_H / 0.14; // the model is 0.14 thick
+      props.remove(glass); props.add(pane);
+      plate.position.y = -0.075; rim.position.y = -0.05; hub.position.y = -0.04;
+    }),
+  ];
+  Promise.all(loaded).then(() => { // reveal all at once
+    props.visible = true;
     { // intro: the table lowers in, then the dishes drop onto it one by one. Plays even with reduced motion (a one-time 2s drop, tap to skip) since many PCs have OS animations off by default.
       const objs = [...cards.map((g) => g.children[0]), ...props.children.filter((o) => Math.hypot(o.position.x, o.position.z) > 1)];
       intro = { t0: performance.now(), dishes: objs.map((o) => ({ o, y: o.position.y })) };
@@ -298,7 +238,7 @@ function build() {
 
   // motion
   let angle = 0, target = 0, k = 0, dragging = false, raf = 0, last = 0, intro = null;
-  const bounce = (t) => (t < 1 / 2.75 ? 7.5625 * t * t : t < 2 / 2.75 ? 7.5625 * (t -= 1.5 / 2.75) * t + 0.75 : t < 2.5 / 2.75 ? 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375 : 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375);
+  const bounce = (t) => 1 - Math.abs(Math.cos(t * 9)) * (1 - t) ** 2; // damped bounce, 0 to 1
   const introEnd = () => { // also the skip: put everything back where it belongs
     turn.position.y = 0;
     intro.dishes.forEach(({ o, y }) => { o.visible = true; o.position.y = y; });
