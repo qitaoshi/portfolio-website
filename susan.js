@@ -32,18 +32,6 @@ host.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") select((idx + 3) % 4);
 });
 
-
-function canvasTex(size, draw, repeat) {
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  draw(c.getContext("2d"), size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
-  if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping, t.repeat.set(repeat, repeat);
-  return t;
-}
-
 const shadowed = (g) => (g.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }), g);
 
 function build() {
@@ -99,42 +87,6 @@ function build() {
   edge.rotation.x = Math.PI / 2;
   edge.position.y = GLASS_H / 2;
   props.add(glass, edge);
-
-  // gold plate (approximate relief: the reference photo is blurred there)
-  const emboss = canvasTex(512, (g, s) => {
-    g.fillStyle = "#808080";
-    g.fillRect(0, 0, s, s);
-    g.translate(s / 2, s / 2);
-    g.strokeStyle = "#fff";
-    g.lineWidth = 6;
-    for (const r of [235, 205, 95, 70]) { g.beginPath(); g.arc(0, 0, r, 0, 7); g.stroke(); }
-    g.fillStyle = "#fff";
-    for (let k = 0; k < 12; k++) {
-      g.save(); g.rotate((k * Math.PI) / 6); g.beginPath(); g.ellipse(150, 0, 34, 14, 0, 0, 7); g.fill(); g.restore();
-    }
-  });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xc9a93a, metalness: 0.95, roughness: 0.32, bumpMap: emboss, bumpScale: 3 });
-  const plate = new THREE.Mesh(new THREE.CylinderGeometry(1.24, 1.24, 0.05, 96), gold);
-  plate.position.y = GLASS_H + 0.025;
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.22, 0.03, 12, 96), gold);
-  rim.rotation.x = Math.PI / 2;
-  rim.position.y = GLASS_H + 0.05;
-  // silver hub with radial brushing
-  const brush = canvasTex(256, (g, s) => {
-    g.fillStyle = "#c4c8cb";
-    g.fillRect(0, 0, s, s);
-    g.translate(s / 2, s / 2);
-    for (let k = 0; k < 260; k++) {
-      g.rotate(Math.random() * 6.28);
-      g.strokeStyle = `rgba(${Math.random() < 0.5 ? "255,255,255" : "60,65,70"},${0.08 + Math.random() * 0.14})`;
-      g.lineWidth = 0.5 + Math.random();
-      g.beginPath(); g.moveTo(0, 0); g.lineTo(s / 2, 0); g.stroke();
-    }
-  });
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.07, 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, map: brush, metalness: 1, roughness: 0.3, anisotropy: 0.8 }));
-  hub.position.y = GLASS_H + 0.085;
-  for (const m of [plate, rim, hub]) m.castShadow = m.receiveShadow = true;
-  props.add(plate, rim, hub);
 
   // four cards standing on small stands, one per project or recipe. The face is drawn on a canvas like the cards on the page.
   const CW = 2.2, CH = 1.65;
@@ -217,12 +169,11 @@ function build() {
     dish("chopsticks", [[225, 2.0, 0.3]]),
     dish("teacup", [[72, 3.4], [288, 3.4]]),
     load("susan").then((model) => {
-      // Blender glass with its rounded edge; the gold plate and hub drop under it and spin with it
+      // Blender glass with its rounded edge, plus the gold plate and hub baked under it
       const pane = model.getObjectByName("Glass");
       pane.material = glassMat; pane.castShadow = false; pane.receiveShadow = true;
       pane.scale.y = GLASS_H / 0.14; // the model is 0.14 thick
-      props.remove(glass); props.add(pane);
-      plate.position.y = -0.075; rim.position.y = -0.05; hub.position.y = -0.04;
+      props.remove(glass); props.add(pane, model.getObjectByName("GoldPlate"), model.getObjectByName("Hub"));
     }),
   ];
   Promise.all(loaded).then(() => { // reveal all at once
