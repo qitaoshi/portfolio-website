@@ -64,7 +64,7 @@ function build() {
   key.shadow.radius = 4;
   key.shadow.bias = -0.0005;
   key.shadow.normalBias = 0.02;
-  scene.add(key, new THREE.HemisphereLight(0xffffff, 0x1a2a55, 0.5));
+  scene.add(key, new THREE.HemisphereLight(0xffffff, 0x2a2a2a, 0.5));
 
   // plain dark table under the glass: glass needs something to refract, but no pattern to distract from it
   const table = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.2, 96), new THREE.MeshStandardMaterial({ color: 0x101c3f, roughness: 0.7 }));
