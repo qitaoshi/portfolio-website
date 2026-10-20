@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#d5c8b2">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#d5c8b2">
+  <title>Food | Qitao Shi</title>
+  <meta name="description" content="Dishes Qitao has cooked and baked, with recipes.">
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="fonts/bagel-fat-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script>document.documentElement.className = "js";</script>
+  <script src="script.js?v=2" defer></script>
+</head>
+<body>
+  <header class="wrap nav">
+    <a class="brand" href="index.html">Qitao Shi</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="food.html" aria-current="page">Food</a></li>
+        <li><a href="projects.html">Projects</a></li>
+      </ul>
+    </nav>
+    <a class="btn" href="resume.pdf" download>Resume</a>
+  </header>
+
+  <main class="wrap">
+    <div class="page-head">
+      <h1>Food</h1>
+      <p>Things I've cooked and baked. Tap a dish to get the recipe.</p>
+    </div>
+
+    <!-- add a dish: copy a figure and point both links at its recipe page -->
+    <div class="kitchen" style="padding-block:2rem 5rem">
+      <figure class="reveal"><a href="salt-bread.html"><img src="img/salt-bread.jpg" alt="Two salt bread rolls in a bowl" width="1200" height="946" loading="lazy"></a><figcaption>Salt bread (Shio Pan)<br><a class="more" href="salt-bread.html">View recipe</a></figcaption></figure>
+      <figure class="reveal"><a href="focaccia.html"><img src="img/focaccia.jpg" alt="Fresh focaccia on a plate" width="900" height="895" loading="lazy"></a><figcaption>Fresh focaccia<br><a class="more" href="focaccia.html">View recipe</a></figcaption></figure>
+      <figure class="reveal"><a href="dumplings.html"><img src="img/dumplings.jpg" alt="Folded dumplings on baking paper" width="900" height="895" loading="lazy"></a><figcaption>Dumplings<br><a class="more" href="dumplings.html">View recipe</a></figcaption></figure>
+      <figure class="reveal"><a href="seared-pork.html"><img src="img/pork.jpg" alt="Seared pork with orange sauce on a white plate" width="900" height="895" loading="lazy"></a><figcaption>Seared pork with orange sauce<br><a class="more" href="seared-pork.html">View recipe</a></figcaption></figure>
+    </div>
+  </main>
+
+  <footer id="contact">
+    <div class="wrap">
+      <div class="ticket">
+        <h2>Contact</h2>
+        <a class="mail" href="mailto:qitaoshi@gmail.com">qitaoshi@gmail.com</a>
+        <!-- TODO: replace # with your real profile URLs -->
+        <ul class="lines"><li><a href="#">GitHub</a></li><li><a href="#">LinkedIn</a></li><li><a href="#">Instagram</a></li></ul>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
