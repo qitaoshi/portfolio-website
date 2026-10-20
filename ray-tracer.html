@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#d5c8b2">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#d5c8b2">
+  <title>Ray Tracer | Qitao Shi</title>
+  <meta name="description" content="A program that turns a 3D scene into a realistic image by simulating how rays of light travel and bounce, producing lighting, shadows and colour.">
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="fonts/bagel-fat-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script>document.documentElement.className = "js";</script>
+  <script src="script.js?v=2" defer></script>
+</head>
+<body>
+  <header class="wrap nav">
+    <a class="brand" href="index.html">Qitao Shi</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="food.html">Food</a></li>
+        <li><a href="projects.html" aria-current="page">Projects</a></li>
+      </ul>
+    </nav>
+    <a class="btn" href="resume.pdf" download>Resume</a>
+  </header>
+
+  <main class="wrap">
+    <div class="entry">
+      <img src="img/ray-tracer.jpg" alt="A ray traced rabbit inside a red, green and blue box" width="1100" height="813">
+      <div>
+        <h1 style="font-size:clamp(2rem,4vw,3.25rem);line-height:1.08">Ray Tracer</h1>
+        <p style="margin-top:1rem">A program that turns a 3D scene into a realistic image by simulating how rays of light travel and bounce, producing lighting, shadows and colour.</p>
+        <ul class="tags" style="margin-top:1rem"><li>Graphics</li></ul>
+        <div class="recipe-meta"><span>Serves: anyone with a 3D scene</span><span>Difficulty: Hard</span></div>
+        <div class="cta"><a class="btn btn-solid" href="#">GitHub</a></div>
+      </div>
+    </div>
+
+    <div class="recipe-body">
+      <section style="padding:0">
+        <h2>Ingredients</h2>
+        <ul class="ingredients">
+          <li><img src="img/stack/csharp.svg" alt="" loading="lazy">C#</li>
+        </ul>
+      </section>
+      <section style="padding:0">
+        <h2>Method</h2>
+        <ol class="method">
+          <li>Set up the scene: a camera, a light and a handful of objects, each with its own colour.</li>
+          <li>For every pixel in the image, fire one ray from the camera out through that pixel into the scene.</li>
+          <li>Find the closest object each ray hits. If it hits nothing, colour the pixel with the background.</li>
+          <li>At each hit point, fire a second ray towards the light. If something blocks it, the point sits in shadow; if not, brighten it based on how directly the light falls on it.</li>
+          <li>Repeat for every pixel, then write the finished colours out to an image file. Leave it to render; larger images take longer to bake.</li>
+        </ol>
+      </section>
+    </div>
+
+    <div class="notes">
+      <h2>Chef's Notes</h2>
+      <p>Start with a single sphere and one light before adding anything else. If the shadows come out speckled, nudge each shadow ray slightly off the surface before firing it, so it does not hit the point it started from. Rendering is slow, so test on a small image first.</p>
+    </div>
+  </main>
+
+  <footer id="contact">
+    <div class="wrap">
+      <div class="ticket">
+        <h2>Contact</h2>
+        <a class="mail" href="mailto:qitaoshi@gmail.com">qitaoshi@gmail.com</a>
+        <!-- TODO: replace # with your real profile URLs -->
+        <ul class="lines"><li><a href="#">GitHub</a></li><li><a href="#">LinkedIn</a></li><li><a href="#">Instagram</a></li></ul>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

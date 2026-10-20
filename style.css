@@ -217,3 +217,13 @@ footer { padding-block: clamp(4rem, 8vw, 6rem); background: var(--surface); }
 .ingredients.as-list li { flex-direction: row; gap: .9rem; padding: .45rem 0; border-bottom: 1px solid var(--line); text-align: left; font-size: 1rem; }
 .ingredients.as-list img { width: 2.5rem; padding: 0; }
 
+/* project images: screenshots sit in a browser window, Side Quests shows its level-up art */
+.browser { position: relative; padding-top: 28px; overflow: hidden; border-radius: var(--radius); background: #f4f1ec; box-shadow: var(--shadow); }
+.browser::before { content: ""; position: absolute; top: 10px; left: 14px; width: 8px; height: 8px; border-radius: 50%; background: #e0675a; box-shadow: 14px 0 #e6b84a, 28px 0 #6cbf6a; }
+.browser img { border-radius: 0; }
+.levels { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; padding: 1rem; border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); }
+.levels figure { margin: 0; text-align: center; }
+.levels img { width: 100%; border-radius: 0; }
+.levels figcaption { font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card .levels { display: grid; padding: .5rem; grid-template-columns: repeat(4, 1fr); box-shadow: none; }
+.card .levels img { aspect-ratio: 1; }

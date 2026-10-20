@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#d5c8b2">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#d5c8b2">
+  <title>Tennis Match Projection Model | Qitao Shi</title>
+  <meta name="description" content="A model that predicts ATP match outcomes from player stats, surface and recent form. Trained on historical match data and served through a simple web app for live what-if predictions.">
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="fonts/bagel-fat-one.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css?v=3">
+  <script>document.documentElement.className = "js";</script>
+  <script src="script.js?v=2" defer></script>
+</head>
+<body>
+  <header class="wrap nav">
+    <a class="brand" href="index.html">Qitao Shi</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="food.html">Food</a></li>
+        <li><a href="projects.html" aria-current="page">Projects</a></li>
+      </ul>
+    </nav>
+    <a class="btn" href="resume.pdf" download>Resume</a>
+  </header>
+
+  <main class="wrap">
+    <div class="entry">
+      <div class="browser"><img src="img/tennis.jpg" alt="The Projector, a web app showing a predicted tennis match winner" width="1400" height="958"></div>
+      <div>
+        <h1 style="font-size:clamp(2rem,4vw,3.25rem);line-height:1.08">Tennis Match Projection Model</h1>
+        <p style="margin-top:1rem">A model that predicts ATP match outcomes from player stats, surface and recent form. Trained on historical match data and served through a simple web app for live what-if predictions.</p>
+        <ul class="tags" style="margin-top:1rem"><li>Machine Learning</li><li>Python</li></ul>
+        <div class="recipe-meta"><span>Serves: tennis fans</span><span>Difficulty: Hard</span></div>
+        <div class="cta"><a class="btn btn-solid" href="#">GitHub</a></div>
+      </div>
+    </div>
+
+    <div class="recipe-body">
+      <section style="padding:0">
+        <h2>Ingredients</h2>
+        <ul class="ingredients">
+          <li><img src="img/stack/python.svg" alt="" loading="lazy">Python</li>
+          <li><img src="img/stack/pandas.svg" alt="" loading="lazy">Pandas</li>
+          <li><img src="img/stack/scikitlearn.svg" alt="" loading="lazy">Scikit-Learn</li>
+          <li><img src="img/stack/tennis-data.svg" alt="" loading="lazy">Historical ATP match data</li>
+        </ul>
+      </section>
+      <section style="padding:0">
+        <h2>Method</h2>
+        <ol class="method">
+          <li>Gather historical ATP match results, then trim out walkovers and retirements so only completed matches remain.</li>
+          <li>Season each match with player stats: ranking, surface win rate and form over the last ten matches. Load it all into Pandas and stir until the columns line up.</li>
+          <li>Split the data by date, keeping the most recent season aside for tasting. Train a Scikit-Learn model on the older matches until its predictions stop improving.</li>
+          <li>Taste-test against the held-back season. If the predicted favourites win about as often as the model says they should, it is ready.</li>
+          <li>Plate it in a simple web app: pick two players and a surface, and serve up the projected winner with its odds.</li>
+        </ol>
+      </section>
+    </div>
+
+    <div class="notes">
+      <h2>Chef's Notes</h2>
+      <p>Always split the matches by date, never at random. Letting future results slip into the training data makes the model look far better than it really is. Surface matters more than you would expect: a player's clay record says little about how they will go on grass.</p>
+    </div>
+  </main>
+
+  <footer id="contact">
+    <div class="wrap">
+      <div class="ticket">
+        <h2>Contact</h2>
+        <a class="mail" href="mailto:qitaoshi@gmail.com">qitaoshi@gmail.com</a>
+        <!-- TODO: replace # with your real profile URLs -->
+        <ul class="lines"><li><a href="#">GitHub</a></li><li><a href="#">LinkedIn</a></li><li><a href="#">Instagram</a></li></ul>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
