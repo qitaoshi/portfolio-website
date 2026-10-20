@@ -113,10 +113,9 @@ section > .wrap > h2 { font-size: clamp(2rem, 4vw, 3rem); margin-bottom: 2.5rem;
 .card.feature h3 { font-size: 2rem; }
 .card.feature img { aspect-ratio: 4 / 3; }
 
-/* kitchen: staggered photo row */
+/* kitchen: photo row */
 .kitchen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
 .kitchen figure { margin: 0; }
-.kitchen figure:nth-child(even) { margin-top: 3rem; }
 .kitchen img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); }
 .kitchen figcaption { margin-top: .6rem; font-size: .9rem; color: var(--muted); }
 
@@ -182,7 +181,6 @@ footer { padding-block: clamp(4rem, 8vw, 6rem); background: var(--surface); }
   .hero { grid-template-columns: 1fr; gap: 2rem; }
   .card.feature { grid-row: auto; }
   .kitchen { grid-template-columns: repeat(2, 1fr); }
-  .kitchen figure:nth-child(even) { margin-top: 1.5rem; }
 }
 
 /* recipe cards on the home page: index cards with a red top rule */

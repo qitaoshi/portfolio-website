@@ -10,6 +10,10 @@ const title = document.getElementById("now-title");
 const stack = document.getElementById("now-stack");
 const link = document.getElementById("now-link");
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// a page can restyle the table and cards with these CSS variables on #susan; the fallbacks are this site's look
+const css = (k, d) => getComputedStyle(host).getPropertyValue(k).trim() || d;
+const PAPER = css("--susan-paper", "#f3f5f1"), INK = css("--susan-ink", "#0e1a3c");
+const TITLE_FONT = css("--susan-title-font", '400 {s}px "Bagel Fat One", sans-serif'), TAG_FONT = css("--susan-tag-font", '700 26px "Public Sans", sans-serif');
 
 let idx = 0;
 let spinTo = null; // set once the 3D scene is ready
@@ -67,7 +71,7 @@ function build() {
   scene.add(key, new THREE.HemisphereLight(0xffffff, 0x2a2a2a, 0.5));
 
   // plain dark table under the glass: glass needs something to refract, but no pattern to distract from it
-  const table = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.2, 96), new THREE.MeshStandardMaterial({ color: 0x101c3f, roughness: 0.7 }));
+  const table = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 4.4, 0.2, 96), new THREE.MeshStandardMaterial({ color: css("--susan-table", "#101c3f"), roughness: 0.7 }));
   table.position.y = -0.22; // just under the glass, like a real banquet table
   table.receiveShadow = true;
   scene.add(table);
@@ -99,25 +103,26 @@ function build() {
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
     const draw = (img) => {
       g.clearRect(0, 0, W, H);
-      roundRect(g, 0, 0, W, H, 36); g.fillStyle = "#f3f5f1"; g.fill();
+      roundRect(g, 0, 0, W, H, 36); g.fillStyle = PAPER; g.fill();
       if (img) {
         g.save(); roundRect(g, 24, 24, W - 48, 380, 22); g.clip();
         const k = Math.max((W - 48) / img.width, 380 / img.height);
         g.drawImage(img, W / 2 - (img.width * k) / 2, 24 + 190 - (img.height * k) / 2, img.width * k, img.height * k);
         g.restore();
       }
-      g.fillStyle = "#0e1a3c"; g.textBaseline = "alphabetic";
+      g.fillStyle = INK; g.textBaseline = "alphabetic";
       let size = 50; // shrink long titles to fit instead of squashing the letters
-      g.font = `${size}px "Bagel Fat One", sans-serif`;
-      while (size > 30 && g.measureText(b.dataset.title).width > W - 56) g.font = `${--size}px "Bagel Fat One", sans-serif`;
+      const title = (n) => (g.font = TITLE_FONT.replace("{s}", n));
+      title(size);
+      while (size > 30 && g.measureText(b.dataset.title).width > W - 56) title(--size);
       g.fillText(b.dataset.title, 28, 478, W - 56);
-      g.font = '700 26px "Public Sans", sans-serif';
+      g.font = TAG_FONT;
       let x = 28;
       for (const tag of b.dataset.stack.split(",").map((v) => v.trim())) {
         const w = g.measureText(tag).width + 32;
         if (x + w > W - 28) break; // no room left on the card: drop the extra tags
-        roundRect(g, x, 508, w, 44, 22); g.strokeStyle = "rgba(14,26,60,.45)"; g.lineWidth = 2; g.stroke();
-        g.fillStyle = "#0e1a3c"; g.fillText(tag, x + 16, 539);
+        roundRect(g, x, 508, w, 44, 22); g.strokeStyle = INK; g.globalAlpha = 0.45; g.lineWidth = 2; g.stroke(); g.globalAlpha = 1;
+        g.fillStyle = INK; g.fillText(tag, x + 16, 539);
         x += w + 10;
       }
       t.needsUpdate = true;
@@ -125,7 +130,7 @@ function build() {
     };
     draw(null);
     const img = new Image();
-    img.onload = () => document.fonts.load('50px "Bagel Fat One"').then(() => draw(img));
+    img.onload = () => document.fonts.load(TITLE_FONT.replace("{s}", 50)).then(() => draw(img));
     img.src = b.dataset.img;
     return t;
   };
@@ -159,7 +164,7 @@ function build() {
   };
   const loader = new GLTFLoader();
   const aniso = renderer.capabilities.getMaxAnisotropy();
-  const load = (name) => loader.loadAsync(`models/${name}.glb`).then((g) => {
+  const load = (name) => loader.loadAsync(new URL(`models/${name}.glb`, import.meta.url).href).then((g) => {
     g.scene.traverse((o) => { if (o.isMesh) for (const t of Object.values(o.material)) if (t?.isTexture) t.anisotropy = aniso; }); // sharp patterns at a grazing angle
     return shadowed(g.scene);
   });
