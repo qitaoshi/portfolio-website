@@ -5,3 +5,7 @@ test-results/
 playwright-report/
 react/
 .claude/
+CLAUDE.md
+
+# Local upstream design references
+.design-references/
